@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PawCade - small cat games</title>
+<meta name="description" content="Nine small browser games with a cat on them. No installs, no accounts.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>">
+<link rel="stylesheet" href="style.css">
+<script defer src="app.js"></script>
+<script defer src="games/snake.js"></script>
+<script defer src="games/whack.js"></script>
+<script defer src="games/memory.js"></script>
+<script defer src="games/g2048.js"></script>
+<script defer src="games/wordcat.js"></script>
+<script defer src="games/zen.js"></script>
+<script defer src="games/flappy.js"></script>
+<script defer src="games/fish.js"></script>
+<script defer src="games/pong.js"></script>
+</head>
+<body>
+<header>
+  <h1>PawCade</h1>
+  <p>Nine small games with a cat on them. Pick one and play. Your best scores stay in this browser.</p>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Search games" aria-label="Search games">
+    <button id="rnd" class="primary">Random game</button>
+    <button id="mute">Sound on</button>
+    <button id="theme">Switch theme</button>
+  </div>
+</header>
+<main id="grid"></main>
+<dialog id="play" aria-labelledby="ttl">
+  <div class="top"><strong id="ttl"></strong><span id="best"></span><button id="x">Close</button></div>
+  <div id="stage"></div>
+</dialog>
+<footer>Made by Hackercat-git. MIT licensed.</footer>
+</body>
+</html>
