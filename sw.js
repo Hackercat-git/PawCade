@@ -1,4 +1,4 @@
-const CACHE = 'pawcade-v3';
+const CACHE = 'pawcade-v4';
 const ASSETS = [
   '/',
   '/index.html',
@@ -29,6 +29,11 @@ const ASSETS = [
   '/games/seabattle.js',
   '/games/checkers.js',
   '/games/chess.js',
+  '/games/catjump.js',
+  '/games/balloon.js',
+  '/games/fishslap.js',
+  '/games/gravcat.js',
+  '/games/catpinball.js',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
