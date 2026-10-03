@@ -78,17 +78,18 @@
       const b = document.createElement('button');
       b.className = 'card'; b.setAttribute('aria-label', g.title);
       b.innerHTML = `
-        ${idx <= 9 ? `<span class="num">${idx}</span>` : ''}
-        <canvas class="thumb" width="200" height="116" aria-hidden="true"></canvas>
-        <span class="card-body">
-          <span class="t">${g.title}</span>
-          <span class="d">${g.blurb}</span>
-          <span class="b">${best ? `🏆 ${best}` : 'Not played yet'}${plays > 1 ? `<span class="plays">${plays} plays</span>` : ''}</span>
-        </span>`;
+        <div class="thumb-wrap">
+          <canvas class="thumb" width="200" height="150" aria-hidden="true"></canvas>
+          <div class="card-overlay"><span class="t">${g.title}</span></div>
+        </div>
+        <div class="card-footer">
+          <span class="b">${best ? `🏆 ${best}` : 'Not played yet'}</span>
+          ${plays > 1 ? `<span class="plays">${plays} plays</span>` : ''}
+        </div>`;
       b.onclick = () => open(g);
       requestAnimationFrame(() => {
         const cv = b.querySelector('.thumb');
-        if (cv && window.Thumbs) Thumbs.draw(cv.getContext('2d'), g.id, 200, 116);
+        if (cv && window.Thumbs) Thumbs.draw(cv.getContext('2d'), g.id, 200, 150);
       });
       el.append(b);
     });
