@@ -2,17 +2,30 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>PawCade — browser games with cats</title>
-<meta name="description" content="Fifteen free browser games with a cat theme. No installs, no accounts, no ads. Play directly in your browser.">
-<meta name="theme-color" content="#16162b">
+<meta name="description" content="Fifteen free browser games with a cat theme. No installs, no accounts, no ads.">
+<meta name="theme-color" content="#16162b" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f4f2ff" media="(prefers-color-scheme: light)">
+
+<!-- PWA manifest -->
+<link rel="manifest" href="manifest.json">
+
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PawCade">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<!-- Open Graph -->
 <meta property="og:title" content="PawCade">
 <meta property="og:description" content="Fifteen free browser games with a cat theme. No installs, no accounts, no ads.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="PawCade">
-<meta name="twitter:description" content="Fifteen free browser games. No installs, no accounts.">
+
+<!-- Favicon -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>">
+
 <link rel="stylesheet" href="style.css">
 <script defer src="app.js"></script>
 <script defer src="games/snake.js"></script>
@@ -30,6 +43,13 @@
 <script defer src="games/asteroids.js"></script>
 <script defer src="games/typing.js"></script>
 <script defer src="games/slide.js"></script>
+<script defer src="games/pong2p.js"></script>
+<script defer src="games/yarnduel.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  }
+</script>
 </head>
 <body>
 <header>

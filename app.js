@@ -27,7 +27,7 @@
     { id: 'chill',  label: '😽 Chill' },
   ];
   const TAG_MAP = {
-    arcade: ['arcade','reflex','action','one-button','catch','clicking','runner','shooter','space'],
+    arcade: ['arcade','reflex','action','one-button','catch','clicking','runner','shooter','space','multiplayer','two-player','fighting'],
     puzzle: ['puzzle','numbers','memory','cards','sliding','brain','pattern','sequence'],
     word:   ['word','typing','speed'],
     chill:  ['relax','calm','sound'],
