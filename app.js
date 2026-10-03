@@ -6,6 +6,10 @@
   };
   let cleanup = null, cur = null, ac, muted = store.get('mute', false), activeTag = 'all';
 
+  function debounce(fn, ms) {
+    let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
+  }
+
   const beep = (f = 440, d = .08, t = 'square') => {
     if (muted) return;
     try {
@@ -73,7 +77,8 @@
     const list = filteredGames(q);
     el.textContent = '';
     if (!list.length) { el.innerHTML = '<p class="empty">No games here — try another filter or clear the search.</p>'; return; }
-    list.forEach(g => {
+    const frag = document.createDocumentFragment();
+    list.forEach((g, i) => {
       const best = store.get('best:' + g.id, 0);
       const plays = store.get('plays:' + g.id, 0);
       const idx = games.indexOf(g) + 1;
@@ -88,13 +93,15 @@
           <span class="b">${best ? `🏆 ${best}` : 'Not played yet'}</span>
           ${plays > 1 ? `<span class="plays">${plays} plays</span>` : ''}
         </div>`;
+      b.style.animationDelay = (i * 28) + 'ms';
       b.onclick = () => open(g);
       requestAnimationFrame(() => {
         const cv = b.querySelector('.thumb');
         if (cv && window.Thumbs) Thumbs.draw(cv.getContext('2d'), g.id, 200, 150);
       });
-      el.append(b);
+      frag.append(b);
     });
+    el.append(frag);
   }
 
   function showBest() {
@@ -142,7 +149,7 @@
     const tabEl = buildTabs();
     sub.after(tabEl);
 
-    $('#q').oninput = render;
+    $('#q').oninput = debounce(render, 120);
     $('#rnd').onclick = () => { const g = games[Math.floor(Math.random() * games.length)]; if (g) open(g); };
     $('#x').onclick = () => $('#play').close();
     $('#fs').onclick = toggleFullscreen;
