@@ -70,11 +70,17 @@
       b.className = 'card'; b.setAttribute('aria-label', g.title);
       b.innerHTML = `
         ${idx <= 9 ? `<span class="num">${idx}</span>` : ''}
-        <span class="em">${g.emoji}</span>
-        <span class="t">${g.title}</span>
-        <span class="d">${g.blurb}</span>
-        <span class="b">${best ? `🏆 ${best}` : 'Not played yet'}${plays > 1 ? `<span class="plays">${plays} plays</span>` : ''}</span>`;
+        <canvas class="thumb" width="200" height="116" aria-hidden="true"></canvas>
+        <span class="card-body">
+          <span class="t">${g.title}</span>
+          <span class="d">${g.blurb}</span>
+          <span class="b">${best ? `🏆 ${best}` : 'Not played yet'}${plays > 1 ? `<span class="plays">${plays} plays</span>` : ''}</span>
+        </span>`;
       b.onclick = () => open(g);
+      requestAnimationFrame(() => {
+        const cv = b.querySelector('.thumb');
+        if (cv && window.Thumbs) Thumbs.draw(cv.getContext('2d'), g.id, 200, 116);
+      });
       el.append(b);
     });
   }
