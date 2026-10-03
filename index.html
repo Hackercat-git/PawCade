@@ -3,21 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PawCade — small browser games with cats</title>
-<meta name="description" content="Twelve free browser games with a cat theme. No installs, no accounts, no ads. Play directly in your browser.">
+<title>PawCade — browser games with cats</title>
+<meta name="description" content="Fifteen free browser games with a cat theme. No installs, no accounts, no ads. Play directly in your browser.">
 <meta name="theme-color" content="#16162b">
-<!-- Open Graph -->
 <meta property="og:title" content="PawCade">
-<meta property="og:description" content="Twelve free browser games with a cat theme. No installs, no accounts.">
+<meta property="og:description" content="Fifteen free browser games with a cat theme. No installs, no accounts, no ads.">
 <meta property="og:type" content="website">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="PawCade">
-<meta name="twitter:description" content="Twelve free browser games. No installs, no accounts.">
-<!-- Favicon -->
+<meta name="twitter:description" content="Fifteen free browser games. No installs, no accounts.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>">
 <link rel="stylesheet" href="style.css">
 <script defer src="app.js"></script>
-<!-- original 9 games -->
 <script defer src="games/snake.js"></script>
 <script defer src="games/whack.js"></script>
 <script defer src="games/memory.js"></script>
@@ -27,19 +24,21 @@
 <script defer src="games/flappy.js"></script>
 <script defer src="games/fish.js"></script>
 <script defer src="games/pong.js"></script>
-<!-- new games -->
 <script defer src="games/breakout.js"></script>
 <script defer src="games/dash.js"></script>
 <script defer src="games/simon.js"></script>
+<script defer src="games/asteroids.js"></script>
+<script defer src="games/typing.js"></script>
+<script defer src="games/slide.js"></script>
 </head>
 <body>
 <header>
   <h1>PawCade</h1>
-  <p id="sub">Browser games with a cat on them. Pick one and play. Your best scores stay in this browser.</p>
+  <p id="sub">Browser games with a cat on them. Pick one and play. Best scores stay in this browser.</p>
   <div class="bar">
     <input id="q" type="search" placeholder="Search games…" aria-label="Search games" autocomplete="off">
     <button id="rnd" class="primary">🎲 Random</button>
-    <button id="mute">Sound on</button>
+    <button id="mute">🔊 Sound</button>
     <button id="theme">🌙 Theme</button>
   </div>
 </header>
@@ -48,6 +47,7 @@
   <div class="top">
     <strong id="ttl"></strong>
     <span id="best"></span>
+    <button id="fs" title="Fullscreen" aria-label="Toggle fullscreen">⛶</button>
     <button id="x" aria-label="Close game">✕</button>
   </div>
   <div id="stage"></div>
@@ -57,6 +57,6 @@
   <span class="sep">·</span>
   <span>Press <kbd>1</kbd>–<kbd>9</kbd> to open a game</span>
 </footer>
-<noscript><p style="text-align:center;padding:2rem">PawCade requires JavaScript. Please enable it to play.</p></noscript>
+<noscript><p style="text-align:center;padding:2rem;color:#aaa">PawCade requires JavaScript. Please enable it to play.</p></noscript>
 </body>
 </html>
