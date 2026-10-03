@@ -110,18 +110,24 @@
     showBest();
     const st = $('#stage'); st.textContent = ''; $('#play').showModal();
     st.tabIndex = -1; st.focus();
-    cleanup = g.mount(st, {
-      beep,
-      score(n) {
-        if (n > store.get('best:' + g.id, 0)) {
-          store.set('best:' + g.id, n);
-          showBest();
-          try { navigator.vibrate?.([30, 20, 60]); } catch {}
-          // flash best score
-          const el = $('#best'); el.style.animation = 'none'; el.offsetWidth; el.style.animation = 'score-pop .4s ease';
+    try {
+      cleanup = g.mount(st, {
+        beep,
+        score(n) {
+          if (n > store.get('best:' + g.id, 0)) {
+            store.set('best:' + g.id, n);
+            showBest();
+            try { navigator.vibrate?.([30, 20, 60]); } catch {}
+            const el = $('#best'); el.style.animation = 'none'; el.offsetWidth; el.style.animation = 'score-pop .4s ease';
+          }
         }
-      }
-    });
+      });
+    } catch (err) {
+      console.error('[PawCade] Game mount failed:', err);
+      const st2 = $('#stage');
+      st2.innerHTML = '<p style="padding:2rem;text-align:center;color:#ff6b9a">⚠️ Game failed to load.<br><small>' + (err && err.message ? err.message : 'Unknown error') + '</small></p>';
+      cleanup = null;
+    }
   }
 
   function toggleFullscreen() {

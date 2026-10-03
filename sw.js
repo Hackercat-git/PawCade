@@ -1,67 +1,49 @@
-const CACHE = 'pawcade-v10';
-const ASSETS = [
+const CACHE = 'pawcade-v11';
+const PRECACHE = [
   '/',
   '/index.html',
   '/app.js',
   '/style.css',
+  '/manifest.json',
   '/games/sprites.js',
   '/games/thumbnails.js',
-  '/games/snake.js',
-  '/games/whack.js',
-  '/games/memory.js',
-  '/games/g2048.js',
-  '/games/wordcat.js',
-  '/games/zen.js',
-  '/games/flappy.js',
-  '/games/fish.js',
-  '/games/pong.js',
-  '/games/breakout.js',
-  '/games/dash.js',
-  '/games/simon.js',
-  '/games/asteroids.js',
-  '/games/typing.js',
-  '/games/slide.js',
-  '/games/pong2p.js',
-  '/games/yarnduel.js',
-  '/games/stack.js',
-  '/games/darts.js',
-  '/games/tugofwar.js',
-  '/games/seabattle.js',
-  '/games/checkers.js',
-  '/games/chess.js',
-  '/games/catjump.js',
-  '/games/balloon.js',
-  '/games/fishslap.js',
-  '/games/gravcat.js',
-  '/games/catpinball.js',
-  '/manifest.json',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
 ];
 
+// Install: pre-cache the shell only
 self.addEventListener('install', e => {
   e.waitUntil(
-    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE)
+      .then(c => c.addAll(PRECACHE))
+      .then(() => self.skipWaiting())
   );
 });
 
+// Activate: delete old caches
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    caches.keys()
+      .then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+      .then(() => self.clients.claim())
   );
 });
 
+// Fetch: stale-while-revalidate for same-origin assets
+// This way new games are picked up automatically without updating the SW
 self.addEventListener('fetch', e => {
-  // cache-first for same-origin assets
-  if (e.request.url.startsWith(self.location.origin)) {
-    e.respondWith(
-      caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
-        const clone = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, clone));
-        return res;
-      }))
-    );
-  }
+  if (!e.request.url.startsWith(self.location.origin)) return;
+  if (e.request.method !== 'GET') return;
+
+  e.respondWith(
+    caches.open(CACHE).then(cache =>
+      cache.match(e.request).then(cached => {
+        const fetchPromise = fetch(e.request).then(res => {
+          if (res.ok) cache.put(e.request, res.clone());
+          return res;
+        }).catch(() => null);
+
+        // Return cached immediately if available, fetch in background
+        return cached || fetchPromise;
+      })
+    )
+  );
 });
