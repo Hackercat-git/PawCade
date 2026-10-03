@@ -100,7 +100,7 @@ Pawcade.register({
 
     function draw() {
       const cs = getComputedStyle(el);
-      const bg = cs.getPropertyValue('--bg').trim(), accent = cs.getPropertyValue('--accent').trim();
+      const bg = cs.getPropertyValue('--bg').trim()||'#12122a', accent = cs.getPropertyValue('--accent').trim()||'#7ecaff';
 
       const sky = x.createLinearGradient(0,0,0,H);
       sky.addColorStop(0,'#0d1240'); sky.addColorStop(1,'#12122a');

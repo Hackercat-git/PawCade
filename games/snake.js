@@ -45,8 +45,8 @@ Pawcade.register({
 
     function draw() {
       const cs = getComputedStyle(el);
-      const bg=cs.getPropertyValue('--bg').trim(), accent=cs.getPropertyValue('--accent').trim();
-      const ink=cs.getPropertyValue('--ink').trim();
+      const bg=cs.getPropertyValue('--bg').trim()||'#12122a', accent=cs.getPropertyValue('--accent').trim()||'#7ecaff';
+      const ink=cs.getPropertyValue('--ink').trim()||'#ffffff';
       foodPulse = (foodPulse + 0.08) % (Math.PI * 2);
 
       const grad = x.createLinearGradient(0, 0, 0, c.height);
