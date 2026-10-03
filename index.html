@@ -17,47 +17,31 @@
 <meta name="apple-mobile-web-app-title" content="PawCade">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 
-<!-- Open Graph -->
+<!-- Android PWA -->
+<meta name="mobile-web-app-capable" content="yes">
+
+<!-- Open Graph / social preview -->
 <meta property="og:title" content="PawCade">
 <meta property="og:description" content="Free browser games with a cat theme. No installs, no accounts, no ads.">
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://hackercat-git.github.io/PawCade/">
+<meta property="og:image" content="https://hackercat-git.github.io/PawCade/icons/icon-512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://hackercat-git.github.io/PawCade/icons/icon-512.png">
 
 <!-- Favicon -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐾</text></svg>">
 
 <link rel="stylesheet" href="style.css">
+
+<!-- Core scripts (sprites + thumbnails needed before first paint) -->
 <script defer src="app.js"></script>
 <script defer src="games/sprites.js"></script>
 <script defer src="games/thumbnails.js"></script>
-<script defer src="games/snake.js"></script>
-<script defer src="games/whack.js"></script>
-<script defer src="games/memory.js"></script>
-<script defer src="games/g2048.js"></script>
-<script defer src="games/wordcat.js"></script>
-<script defer src="games/zen.js"></script>
-<script defer src="games/flappy.js"></script>
-<script defer src="games/fish.js"></script>
-<script defer src="games/pong.js"></script>
-<script defer src="games/breakout.js"></script>
-<script defer src="games/dash.js"></script>
-<script defer src="games/simon.js"></script>
-<script defer src="games/asteroids.js"></script>
-<script defer src="games/typing.js"></script>
-<script defer src="games/slide.js"></script>
-<script defer src="games/pong2p.js"></script>
-<script defer src="games/yarnduel.js"></script>
-<script defer src="games/stack.js"></script>
-<script defer src="games/darts.js"></script>
-<script defer src="games/tugofwar.js"></script>
-<script defer src="games/seabattle.js"></script>
-<script defer src="games/checkers.js"></script>
-<script defer src="games/chess.js"></script>
-  <script defer src="games/catjump.js"></script>
-  <script defer src="games/balloon.js"></script>
-  <script defer src="games/fishslap.js"></script>
-  <script defer src="games/gravcat.js"></script>
-  <script defer src="games/catpinball.js"></script>
+<!-- Game scripts are loaded lazily by app.js when a game is first opened -->
+
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
@@ -72,7 +56,7 @@
   </div>
   <p id="sub">Browser games with a cat on them. Pick one and play. Best scores stay in this browser.</p>
   <div class="bar">
-    <input id="q" type="search" placeholder="Search games…" aria-label="Search games" autocomplete="off">
+    <input id="q" type="search" placeholder="Search games…" aria-label="Search games" autocomplete="off" autocorrect="off" spellcheck="false">
     <button id="rnd" class="primary">🎲 Random</button>
     <button id="mute">🔊 Sound</button>
     <button id="theme">🌙 Theme</button>
@@ -87,11 +71,12 @@
     <button id="x" aria-label="Close game">✕</button>
   </div>
   <div id="stage"></div>
+  <div class="swipe-hint" aria-hidden="true">swipe down to close</div>
 </dialog>
 <footer>
   <span>Made by <a href="https://github.com/Hackercat-git" target="_blank" rel="noopener">Hackercat-git</a> · MIT licensed</span>
   <span class="sep">·</span>
-  <span>Press <kbd>1</kbd>–<kbd>9</kbd> to open a game</span>
+  <span class="kbd-hint">Press <kbd>1</kbd>–<kbd>9</kbd> to open a game</span>
   <button id="installBtn" hidden style="margin-left:auto">📲 Install app</button>
 </footer>
 <noscript><p style="text-align:center;padding:2rem;color:#aaa">PawCade requires JavaScript. Please enable it to play.</p></noscript>
