@@ -276,6 +276,11 @@ kbd{
 /* ── Dialog ──────────────────────────────────────────────────────────── */
 #stage{width:100%;box-sizing:border-box}
 dialog{
+  /* Always dark — games are designed for dark bg */
+  --bg:#12122a;--panel:#1c1c3d;--panel2:#252550;
+  --accent:#7ecaff;--accent2:#ff6b9a;
+  --ink:#f0f0ff;--mute:#8888bb;--line:#2a2a55;
+  color-scheme:dark;
   width:min(96vw,660px);
   max-height:96vh;overflow:auto;
   background:var(--panel);
