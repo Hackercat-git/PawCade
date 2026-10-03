@@ -6,7 +6,7 @@ Pawcade.register({
     const c = document.createElement('canvas');
     c.width = W; c.height = H; c.className = 'board';
     const hint = document.createElement('p'); hint.className = 'hint';
-    hint.textContent = 'P1: W/S   P2: ↑/↓   Space or tap to serve.  📱 Touch: left half = P1, right half = P2.';
+    hint.textContent = '📱 Drag your half to move paddle.  ⌨️ P1: W/S  •  P2: ↑/↓  •  Space to serve';
     el.append(c, hint);
     const x = c.getContext('2d'), keys = {};
     let p1y, p2y, bx, by, vx, vy, sc1, sc2, state, raf, trail, serveDir, frame;
@@ -58,12 +58,17 @@ Pawcade.register({
       const ink = cs.getPropertyValue('--ink').trim(), line = cs.getPropertyValue('--line').trim();
       const mute = cs.getPropertyValue('--mute').trim();
       x.fillStyle = bg; x.fillRect(0, 0, W, H);
+      // touch zone tints (subtle)
+      if (state === 'ready') {
+        x.fillStyle = 'rgba(255,179,71,.06)'; x.fillRect(0, 0, W/2, H);
+        x.fillStyle = 'rgba(100,200,255,.06)'; x.fillRect(W/2, 0, W/2, H);
+      }
       // center line
       x.setLineDash([6, 6]); x.strokeStyle = line; x.lineWidth = 1.5;
       x.beginPath(); x.moveTo(W/2, 0); x.lineTo(W/2, H); x.stroke(); x.setLineDash([]);
       // player labels
       x.fillStyle = mute; x.font = '11px system-ui'; x.textAlign = 'center'; x.textBaseline = 'top';
-      x.fillText('P1  W/S', W/4, 4); x.fillText('P2  ↑/↓', W*3/4, 4);
+      x.fillText('P1  drag / W·S', W/4, 4); x.fillText('P2  drag / ↑↓', W*3/4, 4);
       // scores
       x.fillStyle = ink; x.font = 'bold 36px system-ui';
       x.textAlign = 'center'; x.textBaseline = 'top';

@@ -1,12 +1,12 @@
 Pawcade.register({
   id: 'tugofwar', title: 'Tug of War', emoji: '🐈', tags: 'arcade multiplayer two-player reflex',
-  blurb: 'Two cats fight over a fish! Mash your key to pull! P1: Z  P2: M',
+  blurb: 'Two cats fight over a fish! Mash your key or tap your side to pull!',
   mount(el, api) {
     const W = 380, H = 220;
     const c = document.createElement('canvas');
     c.width = W; c.height = H; c.className = 'board';
     const hint = document.createElement('p'); hint.className = 'hint';
-    hint.textContent = 'P1: mash Z   |   P2: mash M   (or tap your side!)';
+    hint.textContent = '📱 Tap your side to pull!  ⌨️ Z = P1  •  M = P2';
     el.append(c, hint);
     const ctx = c.getContext('2d');
 
@@ -92,8 +92,8 @@ Pawcade.register({
 
       // labels
       ctx.fillStyle = ink; ctx.font = '11px system-ui';
-      ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('P1  [Z]', 10, by + 14);
-      ctx.textAlign = 'right'; ctx.fillText('[M]  P2', W - 10, by + 14);
+      ctx.textAlign = 'left'; ctx.textBaseline = 'top'; ctx.fillText('P1  👆', 10, by + 14);
+      ctx.textAlign = 'right'; ctx.fillText('👆  P2', W - 10, by + 14);
 
       // tug meter center bar
       const mw = 140, mx = (W - mw) / 2, my = H - 26;
@@ -107,9 +107,15 @@ Pawcade.register({
 
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       if (state === 'ready') {
+        // draw tap zone hints
+        ctx.fillStyle = 'rgba(255,179,71,.08)'; ctx.fillRect(0, 0, W/2, H);
+        ctx.fillStyle = 'rgba(100,200,255,.08)'; ctx.fillRect(W/2, 0, W/2, H);
+        ctx.font = '28px serif'; ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center'; ctx.fillText('👆', W/4, H/2 + 20);
+        ctx.fillText('👆', W*3/4, H/2 + 20);
         ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, H/2 - 22, W, 40);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 15px system-ui';
-        ctx.fillText('Mash Z and M to fight for the fish!', W/2, H/2);
+        ctx.fillText('Tap your side — or mash Z / M!', W/2, H/2);
       }
       if (state === 'over') {
         ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, H/2 - 28, W, 50);

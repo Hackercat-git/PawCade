@@ -12,7 +12,7 @@ Pawcade.register({
     const grid = el.querySelector('.si-grid'), info = el.querySelector('.si-info');
     const btns = COLORS.map((col, i) => {
       const b = document.createElement('button');
-      b.style.cssText = `aspect-ratio:1;font-size:2.2rem;border-radius:16px;background:${col}33;border:2px solid ${col}55;color:${col};transition:background .1s,transform .12s;`;
+      b.style.cssText = `aspect-ratio:1;font-size:2.2rem;border-radius:16px;background:${col}33;border:2px solid ${col}55;color:${col};transition:background .1s,transform .12s;touch-action:none;`;
       b.textContent = ICONS[i]; grid.append(b); return b;
     });
     let seq = [], pos, showing, score;
@@ -56,7 +56,7 @@ Pawcade.register({
       btns.forEach(b => b.disabled = false);
       nextRound();
     }
-    btns.forEach((b, i) => b.addEventListener('click', () => {
+    btns.forEach((b, i) => b.addEventListener('pointerdown', () => {
       if (showing || b.disabled) return;
       light(i, 200);
       if (seq[pos] === i) {
