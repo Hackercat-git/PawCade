@@ -2,14 +2,14 @@ Pawcade.register({
   id: 'seabattle', title: 'Sea Battle', emoji: '⚓', tags: 'puzzle brain',
   blurb: 'Sink the enemy cat fleet! Classic battleship vs the AI.',
   mount(el, api) {
-    const N = 8, CS = 32; // 8x8 grid, cell size
+    const N = 8, CS = Math.min(32, Math.floor((Math.min(window.innerWidth, 520) - 56) / (N * 2 + 0.5))); // responsive cell size
     const SHIPS = [4, 3, 3, 2, 2]; // ship lengths
 
     const wrap = document.createElement('div');
     wrap.style.cssText = 'display:flex;flex-direction:column;align-items:center;gap:6px;padding:4px;';
     const hint = document.createElement('p'); hint.className = 'hint';
     hint.style.margin = '0';
-    hint.textContent = 'Click enemy grid to fire. Sink all 5 ships to win!';
+    hint.textContent = '📱 Tap enemy waters to fire · Sink all 5 ships to win!';
 
     const c = document.createElement('canvas');
     const CW = (N * CS + 8) * 2 + 40, CH = N * CS + 80;
@@ -219,6 +219,7 @@ Pawcade.register({
       ctx.strokeRect(ox, oy, N * CS, N * CS);
     }
 
+    c.style.touchAction='none';
     c.addEventListener('pointerdown', e => {
       const r2 = c.getBoundingClientRect();
       const cx2 = (e.clientX - r2.left) * (CW / r2.width);

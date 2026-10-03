@@ -5,7 +5,7 @@ Pawcade.register({
     const W = 340, H = 420, PW_BASE = 60, PH = 10, BR = 5, BC = 7, c = document.createElement('canvas');
     c.width = W; c.height = H; c.className = 'board';
     const hint = document.createElement('p'); hint.className = 'hint';
-    hint.textContent = 'Mouse, touch, or A/D to move. Space or tap to launch. Grab 🍖 for a wider paddle!';
+    hint.textContent = '📱 Drag to move paddle · Tap to launch · Grab 🍖 for wider paddle';
     el.append(c, hint);
     const x = c.getContext('2d'), keys = {};
     let px, bx, by, vx, vy, bricks, sc, lives, state, raf, PW, powerups, wideTimer;
@@ -23,6 +23,12 @@ Pawcade.register({
     }
     function launch() {
       if (state === 'over') { reset(); return; }
+      // drag hint arrow above paddle
+      if (state === 'ready' || state === 'launch') {
+        ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#fff';
+        ctx.font = '13px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('← drag →', px, H - 80); ctx.restore();
+      }
       if (state === 'ready') { state = 'play'; vx = (Math.random() > .5 ? 1 : -1) * 2.8; vy = -3.8; }
     }
     function spawnPowerup(brickX, brickY) {

@@ -2,25 +2,25 @@ Pawcade.register({
   id: 'yarnduel', title: 'Yarn Duel', emoji: '🧶', tags: 'arcade multiplayer two-player fighting',
   blurb: 'Two cats, one screen. Throw yarn balls at each other. 3 hits wins!',
   mount(el, api) {
-    const W=380,H=260,GY=195,LIVES=3;
+    const W=320,H=260,GY=195,LIVES=3;
     const c=document.createElement('canvas');
     c.width=W;c.height=H;c.className='board';
     const hint=document.createElement('p');hint.className='hint';
-    hint.textContent='P1: A/D move, W jump, Space throw  |  P2: arrows move/jump, Enter throw';
+    hint.textContent='📱 P1: tap left half (top=jump, bottom=throw) · P2: tap right half · ⌨️ A/D/W/Space · arrows/Enter';
     el.append(c,hint);
     const ctx=c.getContext('2d'),keys={};
 
     const PLATFORMS=[
       {x:0,  y:GY,w:W},
-      {x:80, y:140,w:90},
-      {x:210,y:140,w:90},
-      {x:155,y:90, w:70},
+      {x:60, y:140,w:80},
+      {x:180,y:140,w:80},
+      {x:120,y:90, w:80},
     ];
 
     let p1,p2,balls,state,raf,frame,flashTimer;
 
     function makePlayer(side){
-      return{x:side===1?60:W-60,y:GY-32,vx:0,vy:0,dir:side===1?1:-1,lives:LIVES,inv:0,grounded:false,side};
+      return{x:side===1?50:W-50,y:GY-32,vx:0,vy:0,dir:side===1?1:-1,lives:LIVES,inv:0,grounded:false,side};
     }
     function reset(){p1=makePlayer(1);p2=makePlayer(2);balls=[];frame=0;flashTimer=0;state='ready';}
     function throwBall(player){
@@ -97,6 +97,23 @@ Pawcade.register({
       ctx.textAlign='right';
       for(let i=0;i<Math.max(0,p2.lives);i++){ctx.fillStyle=i<p2.lives?'#e44':'#444';ctx.fillRect(W-18-i*14,5,10,10);}
       ctx.fillStyle=accent;ctx.fillText('P2',W-8,18);
+      // touch zone hint lines
+      ctx.save(); ctx.globalAlpha=0.08; ctx.strokeStyle='#fff'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke();// center
+      ctx.beginPath(); ctx.moveTo(0,H*.72); ctx.lineTo(W,H*.72); ctx.stroke();// throw strip
+      // column dividers P1
+      ctx.beginPath();ctx.moveTo(W/6,0);ctx.lineTo(W/6,H*.72);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(W/3,0);ctx.lineTo(W/3,H*.72);ctx.stroke();
+      // column dividers P2
+      ctx.beginPath();ctx.moveTo(W*2/3,0);ctx.lineTo(W*2/3,H*.72);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(W*5/6,0);ctx.lineTo(W*5/6,H*.72);ctx.stroke();
+      // labels
+      ctx.globalAlpha=0.25; ctx.fillStyle='#fff'; ctx.font='11px system-ui';
+      ctx.textBaseline='top'; ctx.textAlign='center';
+      ctx.fillText('◀',W/12,4); ctx.fillText('↑',W/4,4); ctx.fillText('▶',W*5/12,4);
+      ctx.fillText('◀',W*7/12,4); ctx.fillText('↑',W*3/4,4); ctx.fillText('▶',W*11/12,4);
+      ctx.fillText('🧶 throw',W/4,H*.74); ctx.fillText('🧶 throw',W*3/4,H*.74);
+      ctx.restore();
       ctx.textAlign='center';ctx.textBaseline='middle';
       if(state==='ready'){
         ctx.fillStyle='rgba(0,0,0,.5)';ctx.fillRect(0,H/2-24,W,42);
@@ -128,14 +145,30 @@ Pawcade.register({
       }
     };
     const ku=e=>keys[e.key]=false;
+    // Touch: each half split into 3 columns (left=move left, center=jump, right=move right)
+    //        + bottom 30% = throw
     c.addEventListener('touchstart',e=>{
       e.preventDefault();
       [...e.changedTouches].forEach(t=>{
         const r=c.getBoundingClientRect();
         const tx=(t.clientX-r.left)/r.width,ty=(t.clientY-r.top)/r.height;
-        if(state==='ready'||state==='win1'||state==='win2'){reset();if(state!=='ready')return;state='play';return;}
-        if(tx<.5){if(ty<.5){p1.vx+=3;p1.dir=1;}else throwBall(p1);}
-        else{if(ty<.5){p2.vx-=3;p2.dir=-1;}else throwBall(p2);}
+        if(state==='ready'||state==='win1'||state==='win2'){
+          if(state!=='ready')reset(); state='play'; return;
+        }
+        if(ty>0.72){// bottom strip = throw for whichever side
+          if(tx<.5)throwBall(p1); else throwBall(p2); return;
+        }
+        if(tx<.5){// P1 side
+          const lx=tx*2;// 0..1 within P1 half
+          if(lx<0.33){p1.vx-=2.5;p1.dir=-1;}
+          else if(lx>0.67){p1.vx+=2.5;p1.dir=1;}
+          else if(p1.grounded){p1.vy=-9.5;api.beep(550,.04);}
+        } else {// P2 side
+          const rx=(tx-.5)*2;// 0..1 within P2 half
+          if(rx<0.33){p2.vx-=2.5;p2.dir=-1;}
+          else if(rx>0.67){p2.vx+=2.5;p2.dir=1;}
+          else if(p2.grounded){p2.vy=-9.5;api.beep(700,.04);}
+        }
       });
     },{passive:false});
     c.style.touchAction='none';

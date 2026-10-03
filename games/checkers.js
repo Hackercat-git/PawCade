@@ -139,6 +139,8 @@ Pawcade.register({
       turn = 1; msg = 'Your turn';
     }
 
+    c.style.touchAction='none';
+    c.addEventListener('contextmenu',e=>e.preventDefault());
     c.addEventListener('pointerdown', e => {
       if (state === 'over') { reset(); return; }
       if (turn !== 1) return;

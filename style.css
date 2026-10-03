@@ -57,7 +57,7 @@ dialog::backdrop{background:rgba(0,0,0,.65);animation:bd-in .2s ease}
 /* game component styles */
 .row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
 .hint{color:var(--mute);font-size:.87rem;margin:10px 0 0;line-height:1.5}
-.board{display:block;width:100%;height:auto;border-radius:12px;touch-action:none;max-height:66vh}
+.board{display:block;width:100%;height:auto;border-radius:12px;touch-action:none;max-height:66vh;object-fit:contain}
 .holes,.mem,.wc,.g2048{display:grid;gap:8px}
 .holes{grid-template-columns:repeat(3,1fr);margin-bottom:12px}
 .hole{aspect-ratio:1;font-size:2.4rem;border-radius:50%;background:var(--bg);transition:background .1s}
@@ -93,4 +93,10 @@ dialog::backdrop{background:rgba(0,0,0,.65);animation:bd-in .2s ease}
   footer{gap:6px;font-size:.82rem}
   dialog{padding:10px;border-radius:14px}
   .board{max-height:52vh}
+  .hint{font-size:max(.82rem,12px)}
+}
+@media(max-height:500px) and (orientation:landscape){
+  .board{max-height:58vh}
+  dialog{max-height:98vh;padding:8px}
+  header{padding-top:20px}
 }

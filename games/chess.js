@@ -261,6 +261,8 @@ Pawcade.register({
       }
     }
 
+    c.style.touchAction='none';
+    c.addEventListener('contextmenu',e=>e.preventDefault());
     c.addEventListener('pointerdown', e => {
       const br = c.getBoundingClientRect();
       const cx2 = (e.clientX - br.left) * (CW / br.width);

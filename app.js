@@ -18,6 +18,15 @@
 
   window.Pawcade = { register: g => games.push(g) };
 
+  // PWA install prompt
+  let deferredInstall = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); deferredInstall = e;
+    const btn = document.getElementById('installBtn');
+    if (btn) { btn.hidden = false; btn.onclick = () => { deferredInstall.prompt(); deferredInstall = null; btn.hidden = true; }; }
+  });
+  window.addEventListener('appinstalled', () => { const btn = document.getElementById('installBtn'); if (btn) btn.hidden = true; });
+
   // Category definitions (tags used in register calls)
   const CATS = [
     { id: 'all',    label: '🐾 All' },
@@ -101,7 +110,6 @@
     cleanup = g.mount(st, {
       beep,
       score(n) {
-        try { navigator.vibrate?.(20); } catch {}
         if (n > store.get('best:' + g.id, 0)) {
           store.set('best:' + g.id, n);
           showBest();

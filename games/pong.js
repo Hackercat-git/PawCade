@@ -4,7 +4,7 @@ Pawcade.register({
   mount(el, api) {
     const W = 360, H = 240, PH = 50, PR = 6, c = document.createElement('canvas');
     c.width = W; c.height = H; c.className = 'board';
-    const hint = document.createElement('p'); hint.className = 'hint'; hint.textContent = 'Drag/move mouse, or use Arrow keys / W & S. Space or tap to restart.';
+    const hint = document.createElement('p'); hint.className = 'hint'; hint.textContent = '📱 Drag to move paddle · ⌨️ W/S or arrow keys · tap to restart';
     el.append(c, hint);
     const x = c.getContext('2d'), keys = {};
     let py, ay, bx, by, vx, vy, sc, miss, over, raf, trail;
@@ -66,7 +66,7 @@ Pawcade.register({
     const kd = e => { keys[e.key] = true; if (e.key.startsWith('Arrow') || e.key == ' ') e.preventDefault(); if (e.key == ' ' && over) reset(); };
     const ku = e => keys[e.key] = false;
     c.onpointermove = e => { if (e.buttons || e.pointerType !== 'mouse') { const r = c.getBoundingClientRect(); py = (e.clientY - r.top) * H / r.height; } };
-    c.onpointerdown = e => { const r = c.getBoundingClientRect(); py = (e.clientY - r.top) * H / r.height; if (over) reset(); };
+    c.onpointerdown = e => { const r = c.getBoundingClientRect(); py = Math.max(PH/2, Math.min(H - PH/2, (e.clientY - r.top) * H / r.height)); if (over) reset(); };
     c.style.touchAction = 'none';
     document.addEventListener('keydown', kd); document.addEventListener('keyup', ku);
     reset(); tick();
