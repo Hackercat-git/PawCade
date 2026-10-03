@@ -1,4 +1,4 @@
-const CACHE = 'pawcade-v9';
+const CACHE = 'pawcade-v10';
 const ASSETS = [
   '/',
   '/index.html',

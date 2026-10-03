@@ -34,12 +34,14 @@
     { id: 'puzzle', label: '🧩 Puzzle' },
     { id: 'word',   label: '🔤 Word' },
     { id: 'chill',  label: '😽 Chill' },
+    { id: 'versus', label: '🆚 Versus' },
   ];
   const TAG_MAP = {
     arcade: ['arcade','reflex','action','one-button','catch','clicking','runner','shooter','space','multiplayer','two-player','fighting'],
     puzzle: ['puzzle','numbers','memory','cards','sliding','brain','pattern','sequence'],
     word:   ['word','typing','speed'],
     chill:  ['relax','calm','sound'],
+    versus: ['multiplayer','two-player','fighting'],
   };
 
   function gameMatchesCat(g, catId) {

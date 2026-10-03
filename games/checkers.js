@@ -1,16 +1,32 @@
 Pawcade.register({
-  id: 'checkers', title: 'Cat Checkers', emoji: '🔴', tags: 'puzzle brain',
-  blurb: 'Classic draughts with cats vs fish! You are 🐱, AI is 🐟. Capture all enemy pieces.',
+  id: 'checkers', title: 'Cat Checkers', emoji: '🔴', tags: 'puzzle brain multiplayer two-player',
+  blurb: 'Classic draughts! 🐱 vs 🐟. Play solo vs the AI or challenge a friend.',
   mount(el, api) {
     const N = 8, CS = 38;
     const CW = N * CS + 2, CH = N * CS + 40;
+
+    if (!document.getElementById('checkers-mode-styles')) {
+      const st = document.createElement('style');
+      st.id = 'checkers-mode-styles';
+      st.textContent = `
+        .checkers-mode { display:flex; gap:8px; justify-content:center; margin-bottom:8px; }
+        .checkers-mode button { padding:7px 20px; border-radius:20px; border:2px solid #3a6080; background:linear-gradient(135deg,#1a2a3a,#0d1b2a); color:#7ecaff; font-size:.9rem; font-weight:700; cursor:pointer; transition:all .15s; }
+        .checkers-mode button.active { background:linear-gradient(135deg,#2a5a8a,#1a3a5a); border-color:#7ecaff; box-shadow:0 0 12px #7ecaff55; }
+      `;
+      document.head.appendChild(st);
+    }
+    const modeBar = document.createElement('div');
+    modeBar.className = 'checkers-mode';
+    modeBar.innerHTML = `<button class="cm1p active">👤 vs AI</button><button class="cm2p">🆚 2 Players</button>`;
+
     const c = document.createElement('canvas');
     c.width = CW; c.height = CH; c.className = 'board';
     const hint = document.createElement('p'); hint.className = 'hint';
-    hint.textContent = 'Click a piece then click a square to move. You = 🐱 (bottom), AI = 🐟 (top)';
-    el.append(c, hint);
+    hint.textContent = 'Click a piece then click a square to move.';
+    el.append(modeBar, c, hint);
     const ctx = c.getContext('2d');
 
+    let mode = '1p';
     let board, sel, state, msg, raf, turn, particles = [], captureFlash = 0;
 
     function newBoard() {
@@ -30,7 +46,8 @@ Pawcade.register({
     }
 
     function reset() {
-      newBoard(); sel = null; state = 'play'; turn = 1; msg = 'Your turn'; particles = []; captureFlash = 0;
+      newBoard(); sel = null; state = 'play'; turn = 1; particles = []; captureFlash = 0;
+      msg = mode === '2p' ? '🔵 Player 1 (🐱)' : 'Your turn';
     }
 
     function spawnParticles(gx, gy, color, n) {
@@ -108,9 +125,21 @@ Pawcade.register({
       board = applyMove(board, sr, sc, m);
       api.beep(m.capture ? 500 : 380, .05);
       sel = null;
-      if (count(2) === 0) { msg = '🏆 You win! All fish eaten!'; state = 'over'; api.score(count(1) * 10); return; }
-      turn = 2; msg = 'AI thinking…';
-      setTimeout(aiTurn, 400);
+
+      if (mode === '2p') {
+        if (count(2) === 0) { msg = '🔵 Player 1 wins! All fish eaten! 🏆'; state = 'over'; api.score(count(1) * 10); return; }
+        if (count(1) === 0) { msg = '🩷 Player 2 wins! All cats eaten! 🏆'; state = 'over'; api.score(count(2) * 10); return; }
+        if (!allMoves(turn === 1 ? 2 : 1, board).length) {
+          msg = turn === 1 ? '🔵 Player 1 wins! No moves left!' : '🩷 Player 2 wins! No moves left!';
+          state = 'over'; api.score(10); return;
+        }
+        turn = turn === 1 ? 2 : 1;
+        msg = turn === 1 ? '🔵 Player 1 (🐱) — your turn' : '🩷 Player 2 (🐟) — your turn';
+      } else {
+        if (count(2) === 0) { msg = '🏆 You win! All fish eaten!'; state = 'over'; api.score(count(1) * 10); return; }
+        turn = 2; msg = 'AI thinking…';
+        setTimeout(aiTurn, 400);
+      }
     }
 
     function scoreBoard(b) {
@@ -138,7 +167,7 @@ Pawcade.register({
     }
 
     function aiTurn() {
-      if (state !== 'play') return;
+      if (state !== 'play' || mode === '2p') return;
       const result = minimax(board, 3, true);
       if (!result.m) { msg = '🐱 AI has no moves — You win!'; state = 'over'; api.score(count(1) * 10); return; }
       const { from: [fr, fc], to } = result.m;
@@ -158,7 +187,7 @@ Pawcade.register({
     c.addEventListener('contextmenu', e => e.preventDefault());
     c.addEventListener('pointerdown', e => {
       if (state === 'over') { reset(); return; }
-      if (turn !== 1) return;
+      if (mode === '1p' && turn !== 1) return;
       const r2 = c.getBoundingClientRect();
       const cx2 = (e.clientX - r2.left) * (CW / r2.width);
       const cy2 = (e.clientY - r2.top) * (CH / r2.height) - 4;
@@ -168,7 +197,9 @@ Pawcade.register({
         tryMove(row, col);
       } else {
         const p = board[row][col];
-        if (p === 1 || p === 3) {
+        const isMine = mode === '1p' ? (p === 1 || p === 3) :
+                       (turn === 1 ? (p === 1 || p === 3) : (p === 2 || p === 4));
+        if (isMine) {
           const moves = getMoves(row, col, board);
           if (moves.length) { sel = [row, col]; api.beep(460, .03); }
         }
@@ -176,13 +207,11 @@ Pawcade.register({
     });
 
     function draw() {
-      // Gradient background
       const grad = ctx.createLinearGradient(0, 0, 0, CH);
       grad.addColorStop(0, '#0d1240');
       grad.addColorStop(1, '#12122a');
       ctx.fillStyle = grad; ctx.fillRect(0, 0, CW, CH);
 
-      // Outer board glow
       ctx.shadowBlur = 24; ctx.shadowColor = '#3a2a6a';
       ctx.fillStyle = '#1a1040';
       ctx.beginPath(); ctx.roundRect(0, 4, CW, N*CS, 8); ctx.fill();
@@ -195,7 +224,6 @@ Pawcade.register({
         for (let c2 = 0; c2 < N; c2++) {
           const x = c2 * CS + 1, y = r * CS + 4;
           const light = (r + c2) % 2 === 0;
-          // Board squares with subtle gradient
           if (light) {
             const lg = ctx.createLinearGradient(x, y, x, y+CS);
             lg.addColorStop(0, '#d4ae7a'); lg.addColorStop(1, '#b8903e');
@@ -207,14 +235,12 @@ Pawcade.register({
           }
           ctx.fillRect(x, y, CS, CS);
 
-          // selected highlight
           if (sel && sel[0] === r && sel[1] === c2) {
             ctx.shadowBlur = 16; ctx.shadowColor = '#ffd600';
             ctx.fillStyle = 'rgba(255,214,0,.4)';
             ctx.fillRect(x, y, CS, CS);
             ctx.shadowBlur = 0;
           }
-          // valid move dots
           if (selMoves.some(m => m.r === r && m.c === c2)) {
             ctx.fillStyle = 'rgba(80,255,120,.3)';
             ctx.fillRect(x, y, CS, CS);
@@ -237,7 +263,6 @@ Pawcade.register({
         }
       }
 
-      // Particles
       particles = particles.filter(p => p.life > 0);
       for (const p of particles) {
         p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life -= 0.055;
@@ -253,7 +278,6 @@ Pawcade.register({
       ctx.fillStyle = 'rgba(0,0,0,0.5)';
       ctx.beginPath(); ctx.roundRect(0, N*CS+4, CW, 36, 0); ctx.fill();
 
-      // Piece counts
       ctx.font = 'bold 13px system-ui'; ctx.textBaseline = 'middle';
       ctx.fillStyle = '#7ecaff'; ctx.textAlign = 'left';
       ctx.shadowBlur = 8; ctx.shadowColor = '#7ecaff';
@@ -264,19 +288,22 @@ Pawcade.register({
       ctx.fillText(`${count(2)}× 🐟`, CW-8, N*CS+22);
       ctx.shadowBlur = 0;
 
-      // Message
-      ctx.fillStyle = turn === 1 ? '#ffd700' : 'rgba(255,255,255,0.7)';
+      const msgCol = msg.startsWith('🔵') ? '#7ecaff' : msg.startsWith('🩷') ? '#ff6b9a' : '#ffd700';
+      ctx.fillStyle = msgCol;
+      ctx.shadowBlur = msg.startsWith('🔵') || msg.startsWith('🩷') ? 8 : 0;
+      ctx.shadowColor = msgCol;
       ctx.font = '12px system-ui'; ctx.textAlign = 'center';
       ctx.fillText(msg, CW/2, N*CS+22);
+      ctx.shadowBlur = 0;
 
       if (state === 'over') {
         ctx.fillStyle = 'rgba(0,0,15,.7)'; ctx.fillRect(0, 0, CW, CH);
         ctx.fillStyle = 'rgba(255,255,255,0.07)';
-        ctx.beginPath(); ctx.roundRect(CW/2-100, CH/2-34, 200, 60, 14); ctx.fill();
+        ctx.beginPath(); ctx.roundRect(CW/2-105, CH/2-34, 210, 64, 14); ctx.fill();
         ctx.strokeStyle = '#7ecaff'; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.roundRect(CW/2-100, CH/2-34, 200, 60, 14); ctx.stroke();
+        ctx.beginPath(); ctx.roundRect(CW/2-105, CH/2-34, 210, 64, 14); ctx.stroke();
         ctx.shadowBlur = 18; ctx.shadowColor = '#7ecaff';
-        ctx.fillStyle = '#fff'; ctx.font = 'bold 15px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(msg, CW/2, CH/2-12);
         ctx.shadowBlur = 0;
         ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '12px system-ui';
@@ -285,6 +312,19 @@ Pawcade.register({
 
       raf = requestAnimationFrame(draw);
     }
+
+    function setMode(m) {
+      mode = m;
+      modeBar.querySelector('.cm1p').classList.toggle('active', m === '1p');
+      modeBar.querySelector('.cm2p').classList.toggle('active', m === '2p');
+      hint.textContent = m === '2p'
+        ? 'P1 = 🐱 (bottom) · P2 = 🐟 (top) · Take turns on the same screen'
+        : 'Click a piece then click a square to move. You = 🐱 (bottom), AI = 🐟 (top)';
+      reset();
+    }
+
+    modeBar.querySelector('.cm1p').onclick = () => setMode('1p');
+    modeBar.querySelector('.cm2p').onclick = () => setMode('2p');
 
     reset(); draw();
     return () => cancelAnimationFrame(raf);

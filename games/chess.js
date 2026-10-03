@@ -1,14 +1,30 @@
 Pawcade.register({
-  id: 'chess', title: 'Cat Chess', emoji: '♟️', tags: 'puzzle brain',
-  blurb: 'Chess with cat pieces! You play white 🐱, AI plays black 🐟. Checkmate the enemy king!',
+  id: 'chess', title: 'Cat Chess', emoji: '♟️', tags: 'puzzle brain multiplayer two-player',
+  blurb: 'Chess with cat pieces! Play solo vs AI or challenge a friend in pass-and-play.',
   mount(el, api) {
+    if (!document.getElementById('chess-mode-styles')) {
+      const s = document.createElement('style');
+      s.id = 'chess-mode-styles';
+      s.textContent = `
+        .chess-mode-bar { display:flex; gap:8px; justify-content:center; margin-bottom:10px; }
+        .chess-mode-bar button { background:#1c1c3d; color:#aaa; border:1px solid #3a3a6a; border-radius:20px; padding:5px 16px; cursor:pointer; font-size:.85rem; font-weight:700; transition:background .15s,color .15s; }
+        .chess-mode-bar button.active { background:linear-gradient(135deg,#2a1a4a,#3a2a6a); color:#c0a0ff; border-color:#7a5aaa; }
+      `;
+      document.head.appendChild(s);
+    }
+
     const N = 8, CS = 42;
     const CW = N * CS + 2, CH = N * CS + 44;
     const c = document.createElement('canvas');
     c.width = CW; c.height = CH; c.className = 'board';
     const hint = document.createElement('p'); hint.className = 'hint';
     hint.textContent = 'Click a piece, then click a square to move.';
-    el.append(c, hint);
+
+    const modeBar = document.createElement('div');
+    modeBar.className = 'chess-mode-bar';
+    modeBar.innerHTML = '<button class="active" data-m="1p">👤 vs AI</button><button data-m="2p">🆚 2 Players</button>';
+    el.append(modeBar, c, hint);
+
     const ctx = c.getContext('2d');
 
     const W_EMOJI = { K:'😻', Q:'🐱', R:'🏠', B:'🧶', N:'🐈', P:'🐾' };
@@ -16,6 +32,14 @@ Pawcade.register({
 
     let board, sel, state, msg, raf, turn, moveCount;
     let enPassant, castling, particles = [], lastCapture = null;
+    let mode = '1p';
+
+    function setMode(m) {
+      mode = m;
+      modeBar.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
+      reset();
+    }
+    modeBar.addEventListener('click', e => { const b = e.target.closest('button'); if (b) setMode(b.dataset.m); });
 
     function startBoard() {
       return [
@@ -30,7 +54,8 @@ Pawcade.register({
 
     function reset() {
       board = startBoard(); sel = null; state = 'play'; turn = 'w';
-      msg = 'Your turn (white)'; enPassant = null;
+      msg = mode === '2p' ? '🔵 Player 1 (white) — your turn' : 'Your turn (white)';
+      enPassant = null;
       castling = { wK: true, wR0: true, wR7: true, bK: true, bR0: true, bR7: true };
       moveCount = 0; particles = []; lastCapture = null;
     }
@@ -159,7 +184,7 @@ Pawcade.register({
     }
 
     function aiTurn() {
-      if (state!=='play') return;
+      if (state!=='play' || mode==='2p') return;
       const moves=[];
       for (let r=0;r<N;r++) for (let c2=0;c2<N;c2++) {
         const p=board[r][c2];
@@ -188,25 +213,57 @@ Pawcade.register({
       turn='w';
     }
 
+    function afterWhiteMove() {
+      // Check if black has any moves
+      const bMoves=[];
+      for (let br=0;br<N;br++) for (let bc=0;bc<N;bc++) { const p=board[br][bc]; if (p&&isBlack(p)) legalMoves(br,bc).forEach(mv=>bMoves.push(mv)); }
+      if (!bMoves.length) {
+        msg=inCheck(board,false)?'🏆 Checkmate! You win!':'Stalemate! Draw.';
+        state='over'; api.score(Math.max(1,40-moveCount)); return;
+      }
+      turn='b';
+      if (mode==='2p') {
+        msg = inCheck(board,false) ? '🩷 Player 2 (black) — Check! Your turn' : '🩷 Player 2 (black) — your turn';
+      } else {
+        msg='AI thinking…'; setTimeout(aiTurn,350);
+      }
+    }
+
+    function afterBlackMove() {
+      const wMoves=[];
+      for (let r=0;r<N;r++) for (let c2=0;c2<N;c2++) { const p=board[r][c2]; if (p&&isWhite(p)) legalMoves(r,c2).forEach(m=>wMoves.push(m)); }
+      if (!wMoves.length) {
+        msg=inCheck(board,true)?'😿 Checkmate! Black wins.':'Stalemate! Draw.';
+        state='over'; return;
+      }
+      turn='w';
+      msg = mode==='2p'
+        ? (inCheck(board,true) ? '🔵 Player 1 (white) — Check! Your turn' : '🔵 Player 1 (white) — your turn')
+        : (inCheck(board,true) ? 'Check! Your turn.' : 'Your turn');
+    }
+
     function click(r, c2) {
       if (state==='over') { reset(); return; }
-      if (turn!=='w') return;
+      const isMine = mode === '1p'
+        ? (turn === 'w' && isWhite(board[r][c2]))
+        : (turn === 'w' ? isWhite(board[r][c2]) : isBlack(board[r][c2]));
+
+      if (turn === 'b' && mode === '1p') return; // AI turn in 1P
+
       if (sel) {
         const [sr,sc]=sel, moves=legalMoves(sr,sc), m=moves.find(([mr,mc])=>mr===r&&mc===c2);
         if (m) {
           const captured=board[r][c2];
           if (captured) { spawnParticles(c2*CS+CS/2+1,r*CS+CS/2+4,'#ffd700',16); }
           doMove(sr,sc,r,c2); api.beep(captured?600:420,.06); sel=null;
-          const bMoves=[];
-          for (let br=0;br<N;br++) for (let bc=0;bc<N;bc++) { const p=board[br][bc]; if (p&&isBlack(p)) legalMoves(br,bc).forEach(mv=>bMoves.push(mv)); }
-          if (!bMoves.length) { msg=inCheck(board,false)?'🏆 Checkmate! You win!':'Stalemate! Draw.'; state='over'; api.score(Math.max(1,40-moveCount)); }
-          else { turn='b'; msg='AI thinking…'; setTimeout(aiTurn,350); }
+          if (turn === 'w') afterWhiteMove();
+          else afterBlackMove();
           return;
         }
         sel=null;
       }
       const p=board[r][c2];
-      if (p&&isWhite(p)) { const moves=legalMoves(r,c2); if (moves.length){sel=[r,c2];api.beep(480,.03);} }
+      if (p && isMine) { const moves=legalMoves(r,c2); if (moves.length){sel=[r,c2];api.beep(480,.03);} }
     }
 
     c.style.touchAction='none';
@@ -291,11 +348,12 @@ Pawcade.register({
       ctx.globalAlpha=1;
 
       // HUD pill
+      const hudColor = mode==='2p' ? (turn==='w'?'#7ecaff':'#ff6b9a') : (turn==='w'?'#ffd700':'rgba(255,255,255,0.6)');
       ctx.fillStyle='rgba(0,0,0,0.5)';
       ctx.beginPath(); ctx.roundRect(0,N*CS+4,CW,40,0); ctx.fill();
-      ctx.fillStyle=turn==='w'?'#ffd700':'rgba(255,255,255,0.6)';
+      ctx.fillStyle=hudColor;
       ctx.font='bold 13px system-ui'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.shadowBlur=turn==='w'?8:0; ctx.shadowColor='#ffd700';
+      ctx.shadowBlur=8; ctx.shadowColor=hudColor;
       ctx.fillText(msg,CW/2,N*CS+24);
       ctx.shadowBlur=0;
 
