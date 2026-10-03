@@ -20,10 +20,10 @@ Pawcade.register({
     ];
     const DARTS_PER_ROUND = 3, ROUNDS = 5;
 
-    let ax, ay, phase, spd, state, round, darts, roundScore, total, thrown, raf, frame;
+    let ax, ay, phase, spd, state, round, darts, roundScore, total, thrown, raf, frame, particles;
 
     function reset() {
-      total = 0; round = 0; state = 'ready'; frame = 0;
+      total = 0; round = 0; state = 'ready'; frame = 0; particles = [];
       startRound();
     }
 
@@ -46,6 +46,12 @@ Pawcade.register({
       }
       api.beep(pts >= 25 ? 800 : pts >= 10 ? 560 : 300, .07);
       thrown.push({ x: ax, y: ay, pts });
+      // score popup particles
+      const col = pts >= 25 ? '#ff4466' : pts >= 10 ? '#ffb347' : '#7ecaff';
+      for (let i = 0; i < 8; i++) {
+        particles.push({ x: ax, y: ay, vx: (Math.random()-.5)*3, vy: (Math.random()-.5)*3 - 1,
+          life: 1, color: col, size: 2 + Math.random()*2 });
+      }
       roundScore += pts;
       darts--;
       if (darts <= 0) {
@@ -69,27 +75,60 @@ Pawcade.register({
         ax = CX + Math.sin(frame * 0.045 * spdX + phase) * (55 + diff * 12);
         ay = CY + Math.cos(frame * 0.033 * spdY + phase * 1.3) * (40 + diff * 8);
       }
+      particles = particles.filter(p => p.life > 0);
+      for (const p of particles) {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life -= 0.04;
+      }
       draw();
       raf = requestAnimationFrame(tick);
     }
 
     function draw() {
       const cs = getComputedStyle(el);
-      const bg = cs.getPropertyValue('--bg').trim();
       const accent = cs.getPropertyValue('--accent').trim();
       const ink = cs.getPropertyValue('--ink').trim();
       const line = cs.getPropertyValue('--line').trim();
 
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+      // Dark wood panel background
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#1a0e06'); grad.addColorStop(0.5, '#2a1a0a'); grad.addColorStop(1, '#12122a');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+      // subtle wood grain lines
+      ctx.save(); ctx.globalAlpha = 0.06;
+      for (let i = 0; i < 12; i++) {
+        ctx.strokeStyle = '#a0622a'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(0, i * 30 + 5); ctx.lineTo(W, i * 30 + 10); ctx.stroke();
+      }
+      ctx.restore();
 
-      // dartboard rings
-      const COLORS = ['#222','#e44','#fff','#e44','#fff'];
+      // dartboard shadow
+      ctx.shadowBlur = 30; ctx.shadowColor = 'rgba(0,0,0,0.6)';
+      ctx.beginPath(); ctx.arc(CX, CY, RINGS[RINGS.length-1].r + 4, 0, Math.PI*2);
+      ctx.fillStyle = '#111'; ctx.fill(); ctx.shadowBlur = 0;
+
+      // dartboard rings — proper darts colors
+      const RING_COLORS = [
+        '#cc1133', // bullseye red
+        '#116622', // 25 green
+        '#1a1a1a', // 10 black
+        '#f0f0e0', // 5 white
+        '#cc1133', // 1 red (outer)
+      ];
       for (let i = RINGS.length - 1; i >= 0; i--) {
-        ctx.fillStyle = COLORS[i % COLORS.length];
+        ctx.fillStyle = RING_COLORS[i];
+        ctx.shadowBlur = i === 0 ? 18 : i === 1 ? 10 : 0;
+        ctx.shadowColor = i === 0 ? '#ff4466' : i === 1 ? '#22ff88' : 'transparent';
         ctx.beginPath(); ctx.arc(CX, CY, RINGS[i].r, 0, Math.PI * 2); ctx.fill();
-        ctx.strokeStyle = line; ctx.lineWidth = 1;
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 1;
         ctx.stroke();
       }
+      // board outer glow
+      ctx.shadowBlur = 20; ctx.shadowColor = '#ffb34766';
+      ctx.strokeStyle = '#a06030'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(CX, CY, RINGS[RINGS.length-1].r + 4, 0, Math.PI*2); ctx.stroke();
+      ctx.shadowBlur = 0;
+
       // bullseye emoji
       ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText('🐱', CX, CY);
@@ -102,36 +141,58 @@ Pawcade.register({
         ctx.fillText(pts, CX + r, CY);
       });
 
-      // thrown darts
+      // thrown darts with glow
       thrown.forEach(d => {
+        ctx.shadowBlur = 12; ctx.shadowColor = '#ffb347';
         ctx.font = '14px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText('🎯', d.x, d.y);
-        ctx.fillStyle = accent; ctx.font = 'bold 10px system-ui';
-        ctx.fillText('+' + d.pts, d.x + 10, d.y - 10);
+        ctx.shadowBlur = 0;
+        // score label
+        ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        ctx.beginPath(); ctx.roundRect(d.x + 4, d.y - 18, 28, 14, 4); ctx.fill();
+        ctx.fillStyle = '#ffb347'; ctx.font = 'bold 10px system-ui';
+        ctx.fillText('+' + d.pts, d.x + 18, d.y - 11);
         ctx.fillStyle = '#fff';
       });
 
+      // particles
+      particles.forEach(p => {
+        ctx.globalAlpha = p.life;
+        ctx.fillStyle = p.color;
+        ctx.shadowBlur = 8; ctx.shadowColor = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI*2); ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+      ctx.globalAlpha = 1;
+
       // crosshair (moving aim)
       if (state === 'play') {
+        ctx.shadowBlur = 10; ctx.shadowColor = accent;
         ctx.strokeStyle = accent; ctx.lineWidth = 1.5;
-        ctx.beginPath(); ctx.moveTo(ax - 10, ay); ctx.lineTo(ax + 10, ay); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(ax, ay - 10); ctx.lineTo(ax, ay + 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax - 12, ay); ctx.lineTo(ax + 12, ay); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(ax, ay - 12); ctx.lineTo(ax, ay + 12); ctx.stroke();
+        ctx.shadowBlur = 0;
         ctx.beginPath(); ctx.arc(ax, ay, 5, 0, Math.PI * 2);
         ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = 1; ctx.stroke();
       }
 
-      // HUD
-      ctx.fillStyle = ink; ctx.font = 'bold 13px system-ui';
-      ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-      ctx.fillText(`Round ${Math.min(round + 1, ROUNDS)}/${ROUNDS}`, 8, 8);
+      // HUD pill
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.beginPath(); ctx.roundRect(4, 4, 150, 22, 6); ctx.fill();
+      ctx.beginPath(); ctx.roundRect(W - 154, 4, 150, 22, 6); ctx.fill();
+      ctx.fillStyle = ink; ctx.font = 'bold 12px system-ui';
+      ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      ctx.fillText(`Round ${Math.min(round + 1, ROUNDS)}/${ROUNDS}`, 10, 15);
       ctx.textAlign = 'right';
-      ctx.fillText(`🎯 ${darts}  Total: ${total}`, W - 8, 8);
+      ctx.fillText(`🎯 ${darts}  Total: ${total}`, W - 10, 15);
 
       // dart counter dots
       ctx.textAlign = 'left';
       for (let i = 0; i < DARTS_PER_ROUND; i++) {
         ctx.fillStyle = i < darts ? accent : line;
+        ctx.shadowBlur = i < darts ? 8 : 0; ctx.shadowColor = accent;
         ctx.beginPath(); ctx.arc(8 + i * 14, H - 14, 5, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
       }
 
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -141,7 +202,7 @@ Pawcade.register({
         ctx.fillText('Click to throw!', W/2, H - 28);
       }
       if (state === 'between') {
-        ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.fillRect(0, H/2 - 20, W, 36);
+        ctx.fillStyle = 'rgba(0,0,0,.5)'; ctx.fillRect(0, H/2 - 20, W, 36);
         ctx.fillStyle = '#fff'; ctx.font = 'bold 15px system-ui';
         ctx.fillText(`Round score: ${roundScore} pts!`, W/2, H/2);
       }
