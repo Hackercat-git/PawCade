@@ -4,7 +4,7 @@ Pawcade.register({
   mount(el, api) {
     const W = 'kitty purrs claws fluff whisk tabby mouse sleep cream tiger apple brave chair dream eagle flame grape house light music ocean plant quiet river stone table water zebra cloud bread candy dance earth ghost happy jelly lemon magic night olive pearl robot sugar bacon brick crown daisy fairy giant honey ivory jolly knife lucky maple noble paint rainy shell storm sunny train unity vivid whale yacht'.split(' ');
     const hint = 'Green is the right spot, yellow is in the word, grey is not.';
-    el.innerHTML = `<div class="wc"></div><div class="row"><input class="wi" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your guess" placeholder="5 letters"><button class="primary wg">Guess</button><button class="wn">New word</button></div><p class="hint wm">${hint}</p>`;
+    el.innerHTML = `<div class="wc"></div><div class="bar"><input class="wi" maxlength="5" autocomplete="off" autocapitalize="off" spellcheck="false" aria-label="Your guess" placeholder="5 letters"><button class="primary wg">Guess</button><button class="wn">New word</button></div><p class="hint wm">${hint}</p>`;
     const G = el.querySelector('.wc'), I = el.querySelector('.wi'), M = el.querySelector('.wm');
     let w, n, done;
     function reset() { w = W[Math.random() * W.length | 0]; n = 0; done = false; G.innerHTML = '<i></i>'.repeat(30); I.value = ''; M.textContent = hint; I.focus(); }
