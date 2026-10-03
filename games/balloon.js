@@ -16,14 +16,20 @@ Pawcade.register({
       { e:'🐟', pts:2,  bad:false, r:20, w:0.22 },
       { e:'🐶', pts:-1, bad:true,  r:22, w:0.15 },
     ];
-    let balloons, score, lives, state, raf, frame, spawnT;
+    let balloons, score, lives, state, raf, frame, spawnT, particles;
 
+    function spawnParticles(px, py, col, n) {
+      for (let i = 0; i < n; i++) {
+        const a = Math.random() * Math.PI * 2, spd = 1.5 + Math.random() * 4;
+        particles.push({ x: px, y: py, vx: Math.cos(a)*spd, vy: Math.sin(a)*spd-1, life: 1, size: 2+Math.random()*4, color: col });
+      }
+    }
     function mkBalloon() {
       const rnd = Math.random(), cum = TYPES.reduce((a,t,i) => { a.push((a[i-1]||0)+t.w); return a; }, []);
       const type = TYPES[cum.findIndex(v => rnd < v)] || TYPES[0];
       return { x: 30 + Math.random() * (W - 60), y: H + 30, vy: -(0.8 + Math.random() * 1.2), wobble: Math.random()*Math.PI*2, ...type, alive: true };
     }
-    function reset() { balloons = []; score = 0; lives = 3; state = 'play'; frame = 0; spawnT = 0; }
+    function reset() { balloons = []; score = 0; lives = 3; state = 'play'; frame = 0; spawnT = 0; particles = []; }
 
     function tick() {
       if (state === 'play') {
@@ -36,10 +42,9 @@ Pawcade.register({
           b.y += b.vy - (score * 0.008);
           b.x += Math.sin(frame * 0.04 + b.wobble) * 0.6;
         });
-        // escaped (off top)
         balloons.filter(b => b.alive && b.y < -50).forEach(b => {
           b.alive = false;
-          if (!b.bad) { lives--; api.beep(180, .15, 'sawtooth'); }
+          if (!b.bad) { lives--; api.beep(180, .15, 'sawtooth'); spawnParticles(b.x, 20, '#ff5555', 8); }
         });
         balloons = balloons.filter(b => b.y > -80);
         if (lives <= 0) { state = 'over'; api.score(score); api.beep(120, .4, 'sawtooth'); }
@@ -49,35 +54,61 @@ Pawcade.register({
 
     function draw() {
       const cs = getComputedStyle(el);
-      const bg = cs.getPropertyValue('--bg').trim(), accent = cs.getPropertyValue('--accent').trim();
+      const accent = cs.getPropertyValue('--accent').trim();
       const ink = cs.getPropertyValue('--ink').trim();
-      ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
-      // floating clouds (decorative)
-      ctx.fillStyle = 'rgba(255,255,255,.04)';
-      [[60,80,60,24],[200,160,80,20],[100,280,70,18],[240,340,50,16]].forEach(([x,y,w,h]) => {
-        ctx.beginPath(); ctx.ellipse(x,y,w,h,0,0,Math.PI*2); ctx.fill();
+      // gradient bg
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#0a0a20'); grad.addColorStop(1, '#1a1040');
+      ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+      // floating clouds
+      ctx.fillStyle = 'rgba(255,255,255,.05)';
+      [[60,80,60,24],[200,160,80,20],[100,280,70,18],[240,340,50,16]].forEach(([cx,cy,cw,ch]) => {
+        ctx.beginPath(); ctx.ellipse(cx,cy,cw,ch,0,0,Math.PI*2); ctx.fill();
       });
+      // particles
+      particles = particles.filter(p => p.life > 0);
+      for (const p of particles) {
+        p.x += p.vx; p.y += p.vy; p.vy += 0.08; p.life -= 0.05;
+        ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
+        ctx.shadowBlur = 10; ctx.shadowColor = p.color;
+        ctx.beginPath(); ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+      ctx.globalAlpha = 1;
       balloons.forEach(b => {
         if (!b.alive) return;
         // string
         ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(b.x, b.y + b.r); ctx.lineTo(b.x + Math.sin(frame*0.06)*4, b.y + b.r + 18); ctx.stroke();
-        // balloon circle
+        // balloon circle with glow
         const col = b.bad ? '#d44' : b.pts >= 3 ? '#ffd700' : accent;
+        ctx.shadowBlur = 14; ctx.shadowColor = col;
         ctx.fillStyle = col + '44';
         ctx.strokeStyle = col; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.shadowBlur = 0;
         // emoji
         ctx.font = (b.r * 1.1) + 'px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(b.e, b.x, b.y);
       });
-      ctx.fillStyle = ink; ctx.font = 'bold 14px system-ui'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
-      ctx.fillText('Score: ' + score + '  Lives: ' + '❤️'.repeat(Math.max(0, lives)), 6, 5);
+      // hud pill
+      const hudText = 'Score: ' + score + '  Lives: ' + '❤️'.repeat(Math.max(0, lives));
+      ctx.font = 'bold 13px system-ui'; ctx.textAlign = 'left'; ctx.textBaseline = 'top';
+      const tw = ctx.measureText(hudText).width;
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.beginPath(); ctx.roundRect(4, 4, tw + 16, 22, 8); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.fillText(hudText, 12, 8);
       if (state === 'over') {
-        ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(0, H/2-32, W, 56);
+        ctx.fillStyle = 'rgba(0,0,0,0.65)'; ctx.fillRect(0, 0, W, H);
+        ctx.shadowBlur = 20; ctx.shadowColor = accent;
+        ctx.fillStyle = 'rgba(10,5,30,0.92)';
+        ctx.beginPath(); ctx.roundRect(W/2-110, H/2-40, 220, 72, 14); ctx.fill();
+        ctx.shadowBlur = 0;
+        ctx.strokeStyle = accent; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.roundRect(W/2-110, H/2-40, 220, 72, 14); ctx.stroke();
         ctx.fillStyle = '#fff'; ctx.font = 'bold 16px system-ui'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText('🎈 Score: ' + score, W/2, H/2-10);
-        ctx.font = '13px system-ui'; ctx.fillText('Tap to play again', W/2, H/2+14);
+        ctx.fillText('🎈 Score: ' + score, W/2, H/2 - 12);
+        ctx.font = '13px system-ui'; ctx.fillText('Tap to play again', W/2, H/2 + 14);
       }
     }
 
@@ -91,6 +122,8 @@ Pawcade.register({
         if (!b.alive) continue;
         if (Math.hypot(mx - b.x, my - b.y) < b.r + 10) {
           b.alive = false;
+          const col = b.bad ? '#ff4444' : b.pts >= 3 ? '#ffd700' : accent;
+          spawnParticles(b.x, b.y, col, 14);
           if (b.bad) { lives = Math.max(0, lives - 1); api.beep(150, .2, 'sawtooth'); if (lives <= 0) { state='over'; api.score(score); } }
           else { score += b.pts; api.score(score); api.beep(600 + score * 4, .07); }
           popped = true; break;
