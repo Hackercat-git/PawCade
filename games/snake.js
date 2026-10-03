@@ -6,7 +6,7 @@ Pawcade.register({
     c.width = c.height = N * S; c.className = 'board';
     const row = document.createElement('div'); row.className = 'row';
     const msg = document.createElement('p'); msg.className = 'hint';
-    msg.textContent = 'Arrow keys, WASD or swipe. Space/tap to restart, P to pause.';
+    msg.textContent = '📱 Swipe to steer · Tap to restart · ⌨️ WASD / arrows · P = pause';
     const wrapBtn = document.createElement('button');
     wrapBtn.textContent = 'Walls: On'; wrapBtn.title = 'Toggle wall-wrap mode';
     wrapBtn.onclick = () => { wrap = !wrap; wrapBtn.textContent = wrap ? 'Walls: Off' : 'Walls: On'; draw(); };
@@ -51,6 +51,16 @@ Pawcade.register({
       if(combo>=3){x.fillStyle='#ff6b9a';x.font='bold 12px system-ui';x.textBaseline='top';x.textAlign='right';x.fillText('x'+combo+' COMBO!',c.width-6,4);}
       x.fillStyle=ink;x.font='bold 14px system-ui';x.textBaseline='top';x.textAlign='left';
       x.fillText('Fish: '+sc+'  Speed: '+Math.round(100*110/sp)+'%'+(wrap?'  wrap':''),6,4);
+      // swipe hint overlay (fades after first move)
+      if (!over && !pz) {
+        x.save(); x.globalAlpha = 0.22;
+        x.fillStyle = ink; x.font = 'bold 20px system-ui'; x.textAlign = 'center'; x.textBaseline = 'middle';
+        x.fillText('↑', c.width/2, 16);
+        x.fillText('↓', c.width/2, c.height - 14);
+        x.fillText('←', 14, c.height/2);
+        x.fillText('→', c.width - 14, c.height/2);
+        x.restore();
+      }
       if(pz){x.fillStyle='rgba(0,0,0,.45)';x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';x.font='bold 20px system-ui';x.textAlign='center';x.fillText('Paused — press P',c.width/2,c.height/2);}
       if(over){x.fillStyle='rgba(0,0,0,.52)';x.fillRect(0,0,c.width,c.height);x.fillStyle='#fff';x.font='bold 18px system-ui';x.textAlign='center';x.fillText('Game over! Score: '+sc,c.width/2,c.height/2-14);x.font='14px system-ui';x.fillText('Space or tap to restart',c.width/2,c.height/2+14);}
     }

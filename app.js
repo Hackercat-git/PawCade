@@ -101,9 +101,11 @@
     cleanup = g.mount(st, {
       beep,
       score(n) {
+        try { navigator.vibrate?.(20); } catch {}
         if (n > store.get('best:' + g.id, 0)) {
           store.set('best:' + g.id, n);
           showBest();
+          try { navigator.vibrate?.([30, 20, 60]); } catch {}
           // flash best score
           const el = $('#best'); el.style.animation = 'none'; el.offsetWidth; el.style.animation = 'score-pop .4s ease';
         }

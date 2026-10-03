@@ -21,6 +21,7 @@ Pawcade.register({
       else M.textContent = (6 - n) + ' tries left.';
     }
     el.querySelector('.wg').onclick = guess;
+    el.querySelector('.wc').addEventListener('pointerdown', () => I.focus());
     el.querySelector('.wn').onclick = reset;
     I.onkeydown = e => { if (e.key == 'Enter') guess(); };
     reset();

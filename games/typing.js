@@ -9,7 +9,7 @@ Pawcade.register({
     inp.spellcheck = false; inp.placeholder = 'Type here…';
     inp.style.cssText = 'width:100%;margin-top:8px;';
     const hint = document.createElement('p'); hint.className = 'hint';
-    hint.textContent = 'Type each word to destroy it. 3 misses = game over. Click canvas or Enter to restart.';
+    hint.textContent = '📱 Tap the text field to type · 3 misses = game over · Enter or tap canvas to restart';
     el.append(c, inp, hint);
     const ctx = c.getContext('2d');
 
@@ -102,7 +102,7 @@ Pawcade.register({
       }
     });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && state === 'over') reset(); });
-    c.addEventListener('pointerdown', () => { if (state === 'over') reset(); });
+    c.addEventListener('pointerdown', () => { if (state === 'over') reset(); inp.focus(); });
     reset(); tick();
     return () => { cancelAnimationFrame(raf); };
   }

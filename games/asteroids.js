@@ -5,7 +5,7 @@ Pawcade.register({
     const W = 340, H = 340, c = document.createElement('canvas');
     c.width = W; c.height = H; c.className = 'board';
     const hint = document.createElement('p'); hint.className = 'hint';
-    hint.textContent = '← → to rotate, ↑ to thrust, Space to shoot. Tap left/right halves to turn, tap center to shoot.';
+    hint.textContent = '📱 Left = rotate left · Right = rotate right · Bottom = thrust · Center = shoot';
     el.append(c, hint);
     const ctx = c.getContext('2d');
     const keys = {};
@@ -96,6 +96,20 @@ Pawcade.register({
         const sx = (i * 97 + 13) % W, sy = (i * 137 + 7) % H;
         ctx.fillRect(sx, sy, 1, 1);
       }
+      // touch zone overlay (mobile hint, fades when playing)
+      if (state === 'play' || state === 'ready') {
+        ctx.save(); ctx.globalAlpha = state === 'ready' ? 0.18 : 0.07;
+        ctx.fillStyle = '#6699ff'; ctx.fillRect(0, 0, W * .28, H);          // left
+        ctx.fillStyle = '#6699ff'; ctx.fillRect(W * .72, 0, W * .28, H);    // right
+        ctx.fillStyle = '#ffb347'; ctx.fillRect(0, H * .72, W, H * .28);    // bottom thrust
+        ctx.restore();
+        ctx.save(); ctx.globalAlpha = state === 'ready' ? 0.55 : 0.18;
+        ctx.font = '18px serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+        ctx.fillText('◀', W * .14, H * .36);
+        ctx.fillText('▶', W * .86, H * .36);
+        ctx.fillText('🔥', W / 2, H * .86);
+        ctx.restore();
+      }
       // particles
       particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.col; ctx.fillRect(p.x-2, p.y-2, 4, 4); });
       ctx.globalAlpha = 1;
@@ -143,15 +157,24 @@ Pawcade.register({
     };
     const ku = e => keys[e.key] = false;
     // touch zones: left=turn left, right=turn right, center=shoot/start
-    c.onpointerdown = e => {
-      const r = c.getBoundingClientRect(), tx = (e.clientX - r.left) / r.width;
+    c.addEventListener('pointerdown', e => {
+      const r = c.getBoundingClientRect();
+      const tx = (e.clientX - r.left) / r.width;
+      const ty = (e.clientY - r.top) / r.height;
       if (state === 'ready') { state = 'play'; return; }
       if (state === 'over') { reset(); return; }
-      if (tx < .3) keys['ArrowLeft'] = true;
-      else if (tx > .7) keys['ArrowRight'] = true;
+      if (ty > .72) { keys['ArrowUp'] = true; e.currentTarget._thrust = e.pointerId; }
+      else if (tx < .28) keys['ArrowLeft'] = true;
+      else if (tx > .72) keys['ArrowRight'] = true;
       else shoot();
-    };
-    c.onpointerup = () => { keys['ArrowLeft'] = false; keys['ArrowRight'] = false; };
+    });
+    c.addEventListener('pointerup', e => {
+      keys['ArrowLeft'] = false; keys['ArrowRight'] = false;
+      if (e.currentTarget._thrust === e.pointerId) { keys['ArrowUp'] = false; e.currentTarget._thrust = null; }
+    });
+    c.addEventListener('pointercancel', e => {
+      keys['ArrowLeft'] = false; keys['ArrowRight'] = false; keys['ArrowUp'] = false;
+    });
     c.style.touchAction = 'none';
     document.addEventListener('keydown', kd); document.addEventListener('keyup', ku);
     reset(); tick();
