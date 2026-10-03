@@ -7,14 +7,15 @@ Pawcade.register({
     const hint = document.createElement('p'); hint.className = 'hint'; hint.textContent = 'Tap, click or press Space to flap.';
     el.append(c, hint);
     const x = c.getContext('2d'), G = .30, J = -5.4, PW = 48;
-    let y, v, ps, sc, state, raf, frame, GAP;
+    let y, v, ps, sc, best, state, raf, frame, GAP;
+    best = 0;
+    function medal(n) { return n >= 20 ? '🥇' : n >= 10 ? '🥈' : n >= 4 ? '🥉' : ''; }
     function reset() { y = H / 2; v = 0; ps = []; sc = 0; frame = 0; GAP = 145; state = 'ready'; }
-    function die() { state = 'over'; api.score(sc); api.beep(140, .3, 'sawtooth'); }
+    function die() { state = 'over'; best = Math.max(best, sc); api.score(sc); api.beep(140, .3, 'sawtooth'); }
     function flap() { if (state == 'over') { reset(); return; } if (state == 'ready') state = 'play'; v = J; api.beep(520, .05); }
     function tick() {
       if (state == 'play') {
         v += G; y += v; frame++;
-        // spawn a pipe every 90 frames; gap shrinks slowly (min 90)
         if (frame % 90 == 1) {
           GAP = Math.max(90, 145 - Math.floor(sc / 5) * 5);
           ps.push({ x: W, top: 60 + Math.random() * (H - GAP - 120), ok: false });
@@ -31,31 +32,45 @@ Pawcade.register({
     }
     function draw() {
       const cs = getComputedStyle(el);
-      x.fillStyle = cs.getPropertyValue('--bg'); x.fillRect(0, 0, W, H);
-
+      const bg = cs.getPropertyValue('--bg').trim();
+      const accent = cs.getPropertyValue('--accent').trim();
+      const ink = cs.getPropertyValue('--ink').trim();
+      const line = cs.getPropertyValue('--line').trim();
+      x.fillStyle = bg; x.fillRect(0, 0, W, H);
       // pipes
-      x.fillStyle = cs.getPropertyValue('--accent');
+      x.fillStyle = accent;
       ps.forEach(p => {
         x.beginPath(); x.roundRect(p.x, 0, PW, p.top, [0,0,8,8]); x.fill();
         x.beginPath(); x.roundRect(p.x, p.top + GAP, PW, H - p.top - GAP, [8,8,0,0]); x.fill();
-        // pipe caps
-        x.fillStyle = cs.getPropertyValue('--line');
+        x.fillStyle = line;
         x.fillRect(p.x - 4, p.top - 10, PW + 8, 10);
         x.fillRect(p.x - 4, p.top + GAP, PW + 8, 10);
-        x.fillStyle = cs.getPropertyValue('--accent');
+        x.fillStyle = accent;
       });
-
       // cat
       x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '28px serif';
       x.save(); x.translate(80, y);
       x.rotate(Math.max(-0.4, Math.min(0.4, v * 0.06)));
       x.fillText('🐈', 0, 0); x.restore();
-
       // score
-      x.fillStyle = cs.getPropertyValue('--ink'); x.font = 'bold 22px system-ui'; x.fillText(sc, W / 2, 30);
+      x.fillStyle = ink; x.font = 'bold 22px system-ui'; x.fillText(sc, W / 2, 30);
       x.font = '15px system-ui';
-      if (state == 'ready') x.fillText('Tap to start', W / 2, H / 2 + 55);
-      if (state == 'over') { x.fillText('Game over — tap to restart', W / 2, H / 2); }
+      if (state == 'ready') {
+        x.fillText('Tap to start', W / 2, H / 2 + 55);
+        if (best > 0) { x.font = '13px system-ui'; x.fillText('Best: ' + best + ' ' + medal(best), W / 2, H / 2 + 78); }
+      }
+      if (state == 'over') {
+        x.fillStyle = 'rgba(0,0,0,.6)'; x.fillRect(W/2 - 110, H/2 - 60, 220, 110);
+        // rounded rect not available inline on all, use fillRect
+        x.fillStyle = '#fff'; x.font = 'bold 20px system-ui'; x.textAlign = 'center';
+        const m = medal(sc);
+        x.fillText(m ? m + ' Score: ' + sc : 'Score: ' + sc, W/2, H/2 - 28);
+        x.font = '14px system-ui';
+        if (sc >= best && sc > 0) { x.fillStyle = accent; x.fillText('🏆 New best!', W/2, H/2 - 4); x.fillStyle = '#fff'; }
+        else if (best > 0) x.fillText('Best: ' + best + ' ' + medal(best), W/2, H/2 - 4);
+        x.fillText('Tap or Space to retry', W/2, H/2 + 24);
+        x.fillText('🥉 4+  🥈 10+  🥇 20+', W/2, H/2 + 46);
+      }
     }
     const key = e => { if (e.key == ' ' || e.key == 'ArrowUp') { e.preventDefault(); flap(); } };
     c.onpointerdown = flap; document.addEventListener('keydown', key);
